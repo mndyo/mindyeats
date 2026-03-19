@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Meal Plan"/>
+<title>My Meal Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(135deg, #f0f4f0 0%, #e8f4e8 50%, #f0f0f4 100%);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 600px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    background: #fff; border-radius: 20px; padding: 28px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; margin-bottom: 20px;
+  }
+  .header-eyebrow { font-size: 11px; letter-spacing: 3px; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+  .header h1 { font-family: 'Playfair Display', serif; font-size: 30px; color: #1a1a1a; line-height: 1.2; margin-bottom: 6px; }
+  .header p { color: #888; font-size: 13px; margin-bottom: 20px; }
+  .macro-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .macro-badge { display: flex; flex-direction: column; align-items: center; border-radius: 12px; padding: 8px 14px; min-width: 70px; }
+  .macro-badge .val { font-size: 16px; font-weight: 800; font-family: 'DM Mono', monospace; }
+  .macro-badge .unit { font-size: 9px; color: #888; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
+  .macro-badge .lbl { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    background: #fff; border-radius: 16px; padding: 16px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+  }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .progress-title { font-weight: 700; font-size: 13px; color: #1a1a1a; }
+  .progress-count { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
+  .progress-track { background: #f0f0f0; border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.4s ease; }
+  .reset-btn {
+    margin-top: 10px; width: 100%; padding: 8px; border: 1.5px dashed #ddd;
+    border-radius: 10px; background: none; color: #aaa; font-size: 12px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: #e07b39; color: #e07b39; }
+
+  /* Dinner selector */
+  .selector-label { font-size: 11px; letter-spacing: 2px; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; padding-left: 4px; }
+  .dinner-btns { display: flex; gap: 10px; margin-bottom: 16px; }
+  .dinner-btn {
+    flex: 1; padding: 12px 8px; border-radius: 14px; border: none;
+    cursor: pointer; font-weight: 700; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; background: #fff; color: #666;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.2s ease;
+  }
+  .dinner-btn .btn-emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+  .dinner-btn.active { color: #fff; transform: translateY(-2px); }
+
+  /* Totals bar */
+  .totals-bar {
+    border-radius: 16px; padding: 16px 20px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; border: 1.5px solid transparent;
+  }
+  .totals-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  .totals-sub { font-size: 13px; color: #555; margin-top: 2px; }
+  .totals-macros { display: flex; gap: 8px; }
+
+  /* Meal card */
+  .meal-card {
+    background: #fff; border-radius: 16px; padding: 18px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 12px;
+    border-left: 4px solid #ccc; transition: opacity 0.3s;
+  }
+  .meal-card.all-done { opacity: 0.6; }
+  .meal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .meal-header-left { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; }
+  .meal-emoji { font-size: 20px; }
+  .meal-name { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; transition: all 0.2s; }
+  .meal-name.done { text-decoration: line-through; color: #aaa; }
+  .meal-note { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap; }
+  .meal-check {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid #ddd;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; flex-shrink: 0; margin-right: 8px;
+    font-size: 13px; color: transparent; background: #fff;
+  }
+  .meal-check.checked { background: #27ae60; border-color: #27ae60; color: #fff; }
+
+  .meal-items { display: flex; flex-direction: column; gap: 6px; }
+  .meal-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 8px; background: #f9f9f9;
+    cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+  }
+  .meal-item:active { transform: scale(0.98); }
+  .item-check {
+    width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #ddd;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s; font-size: 11px; color: transparent; background: #fff;
+  }
+  .item-check.checked { background: #27ae60; border-color: #27ae60; color: #fff; }
+  .item-content { display: flex; justify-content: space-between; align-items: center; flex: 1; }
+  .item-name { font-size: 13px; color: #333; transition: all 0.2s; }
+  .item-name.done { text-decoration: line-through; color: #bbb; }
+  .item-macros { display: flex; gap: 10px; font-size: 11px; flex-shrink: 0; }
+  .cal { color: #e07b39; font-weight: 600; }
+  .pro { color: #2980b9; font-weight: 600; }
+  .fib { color: #27ae60; font-weight: 600; }
+
+  /* Tracker */
+  .tracker-card {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+    border-left: 4px solid #1a1a2e;
+  }
+  .tracker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .tracker-title { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 8px; }
+  .tracker-start-wrap { display: flex; align-items: center; gap: 8px; }
+  .tracker-start-label { font-size: 12px; color: #888; }
+  .tracker-start-btn {
+    padding: 6px 14px; border-radius: 20px; border: none;
+    background: #1a1a2e; color: #fff; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .tracker-start-btn:hover { background: #2d2d5e; }
+  .tracker-reset-btn {
+    padding: 4px 10px; border-radius: 20px; border: 1.5px solid #eee;
+    background: none; color: #aaa; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .tracker-reset-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+  .tracker-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tracker-stat {
+    flex: 1; min-width: 80px; background: #f8f8f8; border-radius: 12px;
+    padding: 12px 14px; text-align: center;
+  }
+  .tracker-stat .t-val { font-size: 22px; font-weight: 800; font-family: 'DM Mono', monospace; color: #1a1a2e; }
+  .tracker-stat .t-unit { font-size: 10px; color: #888; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .tracker-stat .t-lbl { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .week-track { display: flex; flex-direction: column; gap: 6px; }
+  .week-row { display: flex; align-items: center; gap: 8px; }
+  .week-label { font-size: 11px; color: #888; font-weight: 600; width: 52px; flex-shrink: 0; }
+  .week-bar-track { flex: 1; background: #f0f0f0; border-radius: 99px; height: 6px; overflow: hidden; }
+  .week-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .week-status { font-size: 11px; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
+  .tracker-msg {
+    margin-top: 14px; padding: 10px 14px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; text-align: center; line-height: 1.4;
+  }
+  .no-start { text-align: center; padding: 20px; color: #aaa; font-size: 13px; }
+
+  /* Nav tabs */
+  .nav-tabs {
+    display: flex; background: #fff; border-radius: 16px; padding: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; gap: 4px;
+  }
+  .nav-tab {
+    flex: 1; padding: 10px 8px; border-radius: 12px; border: none;
+    cursor: pointer; font-weight: 700; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; background: none; color: #888;
+    transition: all 0.2s ease;
+  }  .nav-tab.active { background: #1a1a2e; color: #fff; box-shadow: 0 2px 8px rgba(26,26,46,0.3); }
+
+  /* Water tracker */
+  .water-card {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+    border-left: 4px solid #2980b9;
+  }
+  .water-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .water-title { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 8px; }
+  .water-oz { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
+  .water-bottles { display: flex; justify-content: center; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .bottle-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; background: none; border: none; padding: 8px;
+    border-radius: 14px; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+  }
+  .bottle-btn:active { transform: scale(0.93); }
+  .bottle-icon {
+    font-size: 42px; transition: all 0.25s ease; filter: grayscale(1) opacity(0.3);
+  }
+  .bottle-icon.filled { filter: none; }
+  .bottle-label { font-size: 11px; font-weight: 700; color: #bbb; transition: all 0.2s; }
+  .bottle-label.filled { color: #2980b9; }
+  .water-bar-wrap { margin-bottom: 14px; }
+  .water-bar-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .water-bar-label { font-size: 12px; font-weight: 700; color: #2980b9; }
+  .water-bar-pct { font-size: 12px; color: #888; font-family: 'DM Mono', monospace; }
+  .water-track { background: #f0f0f0; border-radius: 99px; height: 10px; overflow: hidden; }
+  .water-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #2980b9, #5dade2); transition: width 0.4s ease; }
+  .water-msg { text-align: center; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 10px; }
+  .water-undo { display: block; width: 100%; margin-top: 10px; padding: 7px; border: 1.5px dashed #ddd; border-radius: 10px; background: none; color: #aaa; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: all 0.2s; }
+  .water-undo:hover { border-color: #2980b9; color: #2980b9; }
+
+  /* Grocery */
+  .grocery-card {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 12px;
+    border-left: 4px solid #16a085;
+  }
+  .grocery-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .grocery-title { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 8px; }
+  .grocery-clear-btn {
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid #eee;
+    background: none; color: #aaa; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .grocery-clear-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+  .grocery-section-label {
+    font-size: 10px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase;
+    color: #aaa; margin: 14px 0 8px; padding-left: 4px;
+  }
+  .grocery-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; background: #f9f9f9;
+    margin-bottom: 6px; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .grocery-item.bought { opacity: 0.45; }
+  .grocery-check {
+    width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid #ddd;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s; font-size: 11px; color: transparent;
+    background: #fff; cursor: pointer;
+  }
+  .grocery-check.checked { background: #16a085; border-color: #16a085; color: #fff; }
+  .grocery-item-name { font-size: 13px; color: #333; flex: 1; transition: all 0.2s; cursor: pointer; }
+  .grocery-item-name.done { text-decoration: line-through; color: #bbb; }
+  .grocery-item-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 600; flex-shrink: 0;
+  }
+  .grocery-delete {
+    width: 22px; height: 22px; border-radius: 50%; border: none;
+    background: none; color: #ddd; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s; padding: 0;
+  }
+  .grocery-delete:hover { color: #e74c3c; }
+  .grocery-add-wrap { display: flex; gap: 8px; margin-top: 14px; }
+  .grocery-input {
+    flex: 1; padding: 10px 14px; border-radius: 10px;
+    border: 1.5px solid #eee; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s; color: #333; background: #fff;
+  }
+  .grocery-input:focus { border-color: #16a085; }
+  .grocery-add-btn {
+    padding: 10px 18px; border-radius: 10px; border: none;
+    background: #16a085; color: #fff; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .grocery-add-btn:hover { background: #12876f; }
+  .grocery-stats { display: flex; gap: 6px; margin: 10px 0 14px; flex-wrap: wrap; }
+  .grocery-stat-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+  /* Log */
+  .log-card {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 12px;
+    border-left: 4px solid #8e44ad;
+  }
+  .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .log-title { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 8px; }
+  .log-date { font-size: 11px; color: #888; font-family: 'DM Mono', monospace; }
+  .log-fields { display: flex; flex-direction: column; gap: 16px; }
+  .log-field-group { display: flex; flex-direction: column; gap: 8px; }
+  .log-label { font-size: 12px; font-weight: 700; color: #555; }
+  .log-scale { display: flex; gap: 8px; }
+  .log-scale-btn {
+    flex: 1; padding: 8px 4px; border-radius: 10px; border: 1.5px solid #eee;
+    background: #fafafa; color: #aaa; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    text-align: center;
+  }
+  .log-scale-btn.selected { border-color: #8e44ad; background: #f5f0ff; color: #8e44ad; }
+  .log-textarea {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid #eee; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s; color: #333; resize: vertical;
+    min-height: 80px; background: #fafafa;
+  }
+  .log-textarea:focus { border-color: #8e44ad; }
+  .log-history-card {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 12px;
+  }
+  .log-history-title { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; margin-bottom: 14px; }
+  .log-entry {
+    padding: 12px 14px; border-radius: 10px; background: #f9f9f9;
+    margin-bottom: 8px; border-left: 3px solid #8e44ad;
+  }
+  .log-entry-date { font-size: 11px; color: #888; font-weight: 700; margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+  .log-entry-scores { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .log-entry-score { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #f0e8ff; color: #8e44ad; font-weight: 600; }
+  .log-entry-notes { font-size: 13px; color: #555; line-height: 1.5; }
+  .log-empty { text-align: center; padding: 20px; color: #aaa; font-size: 13px; }
+
+  /* Recipes */
+  .recipe-card {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+    border-left: 4px solid #c0392b;
+  }
+  .recipe-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; cursor: pointer; }
+  .recipe-card-title { font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 8px; }
+  .recipe-card-tag { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .recipe-toggle { font-size: 18px; color: #ccc; transition: transform 0.2s; }
+  .recipe-toggle.open { transform: rotate(180deg); }
+  .recipe-body { overflow: hidden; transition: max-height 0.3s ease; max-height: 0; }
+  .recipe-body.open { max-height: 1200px; }
+  .recipe-desc { font-size: 13px; color: #888; margin-bottom: 14px; line-height: 1.5; padding-top: 10px; }
+  .recipe-section-title { font-size: 10px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; color: #aaa; margin: 12px 0 8px; }
+  .recipe-ingredient {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 8px; background: #f9f9f9; margin-bottom: 5px;
+  }
+  .recipe-ingredient-dot { width: 6px; height: 6px; border-radius: 50%; background: #c0392b; flex-shrink: 0; }
+  .recipe-ingredient-text { font-size: 13px; color: #333; }
+  .recipe-step {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 10px; border-radius: 8px; background: #f9f9f9; margin-bottom: 5px;
+  }
+  .recipe-step-num { width: 22px; height: 22px; border-radius: 50%; background: #c0392b; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .recipe-step-text { font-size: 13px; color: #333; line-height: 1.5; }
+  .recipe-tip { background: #fff8f0; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 13px; color: #e07b39; line-height: 1.5; }
+
+  /* Rest day */
+  .rest-card {
+    background: #f5f0ff; border-radius: 14px; padding: 14px 18px;
+    margin-bottom: 12px; border-left: 4px solid #9b59b6;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .rest-emoji { font-size: 18px; flex-shrink: 0; }
+  .rest-title { font-weight: 700; font-size: 13px; color: #6c3483; margin-bottom: 4px; }
+  .rest-text { font-size: 13px; color: #555; line-height: 1.5; }
+
+  /* Reminders */
+  .reminders-card { background: #fff; border-radius: 16px; padding: 20px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 12px; }
+  .reminders-title { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-weight: 700; font-size: 15px; color: #1a1a1a; font-family: 'Playfair Display', serif; }
+  .reminder-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; }
+  .reminder-check { color: #27ae60; font-weight: 800; font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+  .reminder-text { font-size: 13px; color: #444; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Nav Tabs -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-plan" onclick="switchTab('plan')">🍽️ Plan</button>
+    <button class="nav-tab" id="tab-grocery" onclick="switchTab('grocery')">🛒 Shop</button>
+    <button class="nav-tab" id="tab-water" onclick="switchTab('water')">💧 Water</button>
+    <button class="nav-tab" id="tab-log" onclick="switchTab('log')">📓 Log</button>
+    <button class="nav-tab" id="tab-recipes" onclick="switchTab('recipes')">🍳 Recipes</button>
+    <button class="nav-tab" id="tab-reminders" onclick="switchTab('reminders')">📌 Tips</button>
+  </div>
+
+  <!-- MEAL PLAN VIEW -->
+  <div id="view-plan">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">Body Recomp Plan</div>
+    <h1>Your Meal Plan</h1>
+    <p>5'7" · 146 lbs · 28F · Moderately Active</p>
+    <div class="macro-row">
+      <div class="macro-badge" style="background:#e07b3915"><span class="val" style="color:#e07b39">~1,900</span><span class="unit">cal</span><span class="lbl">Daily</span></div>
+      <div class="macro-badge" style="background:#2980b915"><span class="val" style="color:#2980b9">143–159g</span><span class="unit">protein</span><span class="lbl">Daily</span></div>
+      <div class="macro-badge" style="background:#27ae6015"><span class="val" style="color:#27ae60">31–34g</span><span class="unit">fiber</span><span class="lbl">Daily</span></div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar-wrap">
+    <div class="progress-header">
+      <span class="progress-title">🍽️ Today's Progress</span>
+      <span class="progress-count" id="progress-count">0 / 0 items</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <button class="reset-btn" onclick="resetAll()">↺ Reset all checks</button>
+  </div>
+
+  <!-- Recomp Tracker -->
+  <div class="tracker-card">
+    <div class="tracker-header">
+      <div class="tracker-title">📅 Recomp Tracker</div>
+      <div class="tracker-start-wrap" id="tracker-start-wrap"></div>
+    </div>
+    <div id="tracker-body"></div>
+  </div>
+
+  <!-- Dinner Selector -->
+  <div class="selector-label">Select tonight's dinner to customize your plan</div>
+  <div class="dinner-btns">
+    <button class="dinner-btn active" id="btn-beef" onclick="selectDinner('beef')"><span class="btn-emoji">🥩</span>Beef Bowl</button>
+    <button class="dinner-btn" id="btn-chicken" onclick="selectDinner('chicken')"><span class="btn-emoji">🍗</span>Chicken Bowl</button>
+    <button class="dinner-btn" id="btn-salmon" onclick="selectDinner('salmon')"><span class="btn-emoji">🐟</span>Salmon Bowl</button>
+  </div>
+
+  <!-- Totals Bar -->
+  <div class="totals-bar" id="totals-bar" style="background:#fdf2f2; border-color:#c0392b30;">
+    <div>
+      <div class="totals-label" id="totals-label" style="color:#c0392b">Today's Totals</div>
+      <div class="totals-sub" id="totals-sub">Beef Bowl day</div>
+    </div>
+    <div class="totals-macros">
+      <div class="macro-badge" style="background:#e07b3915"><span class="val" id="total-cal" style="color:#e07b39">1,900</span><span class="unit">cal</span><span class="lbl">Calories</span></div>
+      <div class="macro-badge" style="background:#2980b915"><span class="val" id="total-pro" style="color:#2980b9">151g</span><span class="unit">pro</span><span class="lbl">Protein</span></div>
+      <div class="macro-badge" style="background:#27ae6015"><span class="val" id="total-fib" style="color:#27ae60">32g</span><span class="unit">fiber</span><span class="lbl">Fiber</span></div>
+    </div>
+  </div>
+
+  <!-- Meals rendered here -->
+  <div id="meals-container"></div>
+
+  </div><!-- end view-plan -->
+
+  <!-- GROCERY VIEW -->
+  <div id="view-grocery" style="display:none">
+    <div class="grocery-card">
+      <div class="grocery-header">
+        <div class="grocery-title">🛒 Grocery List</div>
+        <button class="grocery-clear-btn" onclick="uncheckAll()">Uncheck all</button>
+      </div>
+      <div class="grocery-stats" id="grocery-stats"></div>
+      <div id="grocery-list"></div>
+      <div class="grocery-add-wrap">
+        <input class="grocery-input" id="grocery-input" type="text" placeholder="Add a custom item..." onkeydown="if(event.key==='Enter') addCustomItem()"/>
+        <button class="grocery-add-btn" id="grocery-add-btn" onclick="addCustomItem()">+ Add</button>
+      </div>
+    </div>
+  </div><!-- end view-grocery -->
+
+  <!-- WATER VIEW -->
+  <div id="view-water" style="display:none">
+    <div class="water-card">
+      <div class="water-header">
+        <div class="water-title">💧 Water Tracker</div>
+        <span class="water-oz" id="water-oz">0 / 96 oz</span>
+      </div>
+      <div class="water-bottles" id="water-bottles"></div>
+      <div class="water-bar-wrap">
+        <div class="water-bar-header">
+          <span class="water-bar-label" id="water-bar-label">0 of 4 bottles</span>
+          <span class="water-bar-pct" id="water-bar-pct">0%</span>
+        </div>
+        <div class="water-track"><div class="water-fill" id="water-fill" style="width:0%"></div></div>
+      </div>
+      <div class="water-msg" id="water-msg"></div>
+      <button class="water-undo" onclick="undoWater()">↩ Undo last bottle</button>
+    </div>
+  </div><!-- end view-water -->
+
+  <!-- LOG VIEW -->
+  <div id="view-log" style="display:none">
+    <div class="log-card">
+      <div class="log-header">
+        <div class="log-title">📓 Daily Log</div>
+        <span class="log-date" id="log-date"></span>
+      </div>
+      <div class="log-fields">
+        <div class="log-field-group">
+          <label class="log-label">⚡ Energy today</label>
+          <div class="log-scale" id="log-energy"></div>
+        </div>
+        <div class="log-field-group">
+          <label class="log-label">💪 Gym performance</label>
+          <div class="log-scale" id="log-gym"></div>
+        </div>
+        <div class="log-field-group">
+          <label class="log-label">😴 Sleep quality</label>
+          <div class="log-scale" id="log-sleep"></div>
+        </div>
+        <div class="log-field-group">
+          <label class="log-label">🌀 Hunger levels</label>
+          <div class="log-scale" id="log-hunger"></div>
+        </div>
+        <div class="log-field-group">
+          <label class="log-label">📝 Notes</label>
+          <textarea class="log-textarea" id="log-notes" placeholder="How are you feeling? Any progress, wins, or observations..." oninput="saveLog()"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="log-history-card">
+      <div class="log-history-title">📅 Past Entries</div>
+      <div id="log-history"></div>
+    </div>
+  </div><!-- end view-log -->
+
+  <!-- RECIPES VIEW -->
+  <div id="view-recipes" style="display:none">
+
+    <!-- Recipe 1: Soy Honey Sesame Dressing -->
+    <div class="recipe-card" style="border-left-color:#16a085">
+      <div class="recipe-card-header" onclick="toggleRecipe('dressing')">
+        <div class="recipe-card-title">
+          <span>🥢</span> Soy Honey Sesame Dressing
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="recipe-card-tag" style="background:#f0faf8;color:#16a085">Salmon days</span>
+          <span class="recipe-toggle" id="toggle-dressing">▼</span>
+        </div>
+      </div>
+      <div class="recipe-body" id="body-dressing">
+        <p class="recipe-desc">A light, punchy dressing for the shredded cabbage in your salmon bowl. Make a 4-serving batch on meal prep day and store in a jar — lasts a week in the fridge.</p>
+        <div class="recipe-section-title">Ingredients — 1 serving</div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot" style="background:#16a085"></div><span class="recipe-ingredient-text">Soy sauce (low sodium) — 1 tbsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot" style="background:#16a085"></div><span class="recipe-ingredient-text">Rice vinegar — 1 tbsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot" style="background:#16a085"></div><span class="recipe-ingredient-text">Sesame oil — 1 tsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot" style="background:#16a085"></div><span class="recipe-ingredient-text">Hot honey — 1 tsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot" style="background:#16a085"></div><span class="recipe-ingredient-text">Garlic powder — pinch</span></div>
+        <div class="recipe-section-title">Steps</div>
+        <div class="recipe-step"><div class="recipe-step-num" style="background:#16a085">1</div><span class="recipe-step-text">Add all ingredients to a small bowl or jar.</span></div>
+        <div class="recipe-step"><div class="recipe-step-num" style="background:#16a085">2</div><span class="recipe-step-text">Whisk together or seal the jar and shake well until fully combined.</span></div>
+        <div class="recipe-step"><div class="recipe-step-num" style="background:#16a085">3</div><span class="recipe-step-text">Dress the cabbage fresh right before eating — don't pre-dress or it goes soggy.</span></div>
+        <div class="recipe-tip">💡 Batch tip: multiply everything by 4 for a week's worth. Sesame oil will separate in the fridge — just shake before using.</div>
+      </div>
+    </div>
+
+    <!-- Recipe 2: White Miso Salmon Marinade -->
+    <div class="recipe-card" style="border-left-color:#2980b9">
+      <div class="recipe-card-header" onclick="toggleRecipe('miso')">
+        <div class="recipe-card-title">
+          <span>🐟</span> White Miso Salmon Marinade
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="recipe-card-tag" style="background:#e8f4fd;color:#2980b9">Salmon days</span>
+          <span class="recipe-toggle" id="toggle-miso">▼</span>
+        </div>
+      </div>
+      <div class="recipe-body" id="body-miso">
+        <p class="recipe-desc">A simple miso glaze that caramelizes beautifully in the oven. White miso is mild and slightly sweet — it pairs perfectly with the hot honey and gives your salmon a restaurant-quality finish without adding much to your macros.</p>
+        <div class="recipe-section-title">Ingredients — 1 fillet (113g)</div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot"></div><span class="recipe-ingredient-text">White miso paste — 1 tbsp (~18g)</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot"></div><span class="recipe-ingredient-text">Hot honey — 1 tsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot"></div><span class="recipe-ingredient-text">Soy sauce (low sodium) — 1 tsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot"></div><span class="recipe-ingredient-text">Rice vinegar — ½ tsp</span></div>
+        <div class="recipe-ingredient"><div class="recipe-ingredient-dot"></div><span class="recipe-ingredient-text">Garlic powder — pinch</span></div>
+        <div class="recipe-section-title">Steps</div>
+        <div class="recipe-step"><div class="recipe-step-num">1</div><span class="recipe-step-text">Mix all marinade ingredients together in a small bowl until smooth.</span></div>
+        <div class="recipe-step"><div class="recipe-step-num">2</div><span class="recipe-step-text">Pat salmon fillet dry with a paper towel — this helps the marinade stick and the skin crisp up.</span></div>
+        <div class="recipe-step"><div class="recipe-step-num">3</div><span class="recipe-step-text">Spread marinade evenly over the top of the fillet. For best results, marinate for 20–30 min in the fridge (or even overnight).</span></div>
+        <div class="recipe-step"><div class="recipe-step-num">4</div><span class="recipe-step-text">Bake at 400°F for 10–12 min. For meal prep, pull at 125–130°F internal so it doesn't dry out when reheated.</span></div>
+        <div class="recipe-step"><div class="recipe-step-num">5</div><span class="recipe-step-text">Optional: broil for the last 1–2 min to caramelize the miso glaze on top.</span></div>
+        <div class="recipe-tip">💡 Meal prep: marinate all 4 fillets together in a container overnight, then bake Sunday evening. The miso actually gets better the longer it sits.</div>
+      </div>
+    </div>
+
+  </div><!-- end view-recipes -->
+
+  <!-- REMINDERS VIEW -->
+  <div id="view-reminders" style="display:none">
+    <div class="reminders-card">
+      <div class="reminders-title"><span>📌</span> Key Reminders</div>
+      <div class="reminder-item" style="background:#f9f9f9"><span class="reminder-check">✓</span><span class="reminder-text">Consistency beats perfection — stick to the plan and trust the process</span></div>
+      <div class="reminder-item"><span class="reminder-check">✓</span><span class="reminder-text">Scale may stay roughly the same — progress shows in how clothes fit and gym strength</span></div>
+      <div class="reminder-item" style="background:#f9f9f9"><span class="reminder-check">✓</span><span class="reminder-text">Protein is the most important number — hit 143–159g every single day</span></div>
+      <div class="reminder-item"><span class="reminder-check">✓</span><span class="reminder-text">Recomp is slow by design — give it at least 8–12 weeks before evaluating</span></div>
+      <div class="reminder-item" style="background:#f9f9f9"><span class="reminder-check">✓</span><span class="reminder-text">Progressive overload in the gym is what drives muscle growth — try to add weight or reps each week</span></div>
+      <div class="reminder-item"><span class="reminder-check">✓</span><span class="reminder-text">Drink all 4 Owala bottles daily — creatine requires extra hydration</span></div>
+      <div class="reminder-item" style="background:#f9f9f9"><span class="reminder-check">✓</span><span class="reminder-text">Salmon cooks at 400°F for 10–12 min — pull at 125–130°F for best meal prep texture</span></div>
+      <div class="reminder-item"><span class="reminder-check">✓</span><span class="reminder-text">Defrost salmon overnight in the fridge before baking</span></div>
+      <div class="reminder-item" style="background:#f9f9f9"><span class="reminder-check">🥢</span><span class="reminder-text">Dressing (salmon days): 1 tbsp soy sauce + 1 tbsp rice vinegar + 1 tsp sesame oil + 1 tsp hot honey + pinch garlic powder</span></div>
+    </div>
+  </div><!-- end view-reminders -->
+
+</div><!-- end container -->
+
+<script>
+const STORAGE_KEY = 'mealplan_checks';
+const DATE_KEY = 'mealplan_date';
+
+const dinners = {
+  beef: {
+    color: "#c0392b", bg: "#fdf2f2", emoji: "🥩", label: "Beef Bowl",
+    lunchPotato: { g: 200, cal: 175, fiber: 4.5 },
+    snack2pb: { g: "38g", cal: 214, protein: 8, fiber: 2.5 },
+    total: { cal: "1,896", pro: "154g", fib: "32.5g" },
+    dinnerItems: [
+      { name: "Beef 120g", cal: "200 cal", pro: "26g pro", fib: null },
+      { name: "Korean sweet potato 150g", cal: "130 cal", pro: null, fib: "3.5g fiber" },
+      { name: "Cottage cheese 150g", cal: "90 cal", pro: "14g pro", fib: null },
+      { name: "Cucumber 60g", cal: "10 cal", pro: null, fib: null },
+      { name: "Kimchi 80g", cal: "30 cal", pro: "2g pro", fib: "2g fiber" },
+      { name: "Hot honey drizzle 5g", cal: "20 cal", pro: null, fib: null },
+    ]
+  },
+  chicken: {
+    color: "#e67e22", bg: "#fef9f2", emoji: "🍗", label: "Chicken Bowl",
+    lunchPotato: { g: 150, cal: 130, fiber: 3.5 },
+    snack2pb: { g: "45g", cal: 255, protein: 10, fiber: 3 },
+    total: { cal: "1,855", pro: "159g", fib: "31.5g" },
+    dinnerItems: [
+      { name: "Chicken 150g", cal: "165 cal", pro: "31g pro", fib: null },
+      { name: "Korean sweet potato 150g", cal: "130 cal", pro: null, fib: "3.5g fiber" },
+      { name: "Cottage cheese 150g", cal: "90 cal", pro: "14g pro", fib: null },
+      { name: "Cucumber 60g", cal: "10 cal", pro: null, fib: null },
+      { name: "Kimchi 80g", cal: "30 cal", pro: "2g pro", fib: "2g fiber" },
+      { name: "Hot honey drizzle 5g", cal: "20 cal", pro: null, fib: null },
+    ]
+  },
+  salmon: {
+    color: "#2980b9", bg: "#f2f8fd", emoji: "🐟", label: "Salmon Bowl",
+    lunchPotato: { g: 150, cal: 130, fiber: 3.5 },
+    snack2pb: { g: "16g", cal: 90, protein: 3.5, fiber: 1 },
+    total: { cal: "1,860", pro: "143g", fib: "34g" },
+    dinnerItems: [
+      { name: "Salmon fillet 113g", cal: "220 cal", pro: "23g pro", fib: null },
+      { name: "Korean sweet potato 150g", cal: "130 cal", pro: null, fib: "3.5g fiber" },
+      { name: "Avocado ¼", cal: "60 cal", pro: null, fib: "2.5g fiber" },
+      { name: "Shredded cabbage 160g", cal: "40 cal", pro: null, fib: "3g fiber" },
+      { name: "Cottage cheese 120g", cal: "70 cal", pro: "11g pro", fib: null },
+      { name: "Soy honey sesame dressing", cal: "50 cal", pro: null, fib: null },
+    ]
+  }
+};
+
+let currentDinner = 'beef';
+let checks = {};
+
+function getMealSections(dinner) {
+  const d = dinners[dinner];
+  return [
+    {
+      id: 'breakfast', emoji: '🌅', label: 'Breakfast', note: 'Every day',
+      accent: '#e07b39',
+      items: [
+        { id: 'b1', name: 'Transparent Labs protein shake', cal: '130 cal', pro: '28g pro', fib: null },
+        { id: 'b2', name: 'Silk soy milk', cal: '80 cal', pro: '7g pro', fib: null },
+        { id: 'b3', name: 'Fuji apple', cal: '80 cal', pro: null, fib: '4g fiber' },
+        { id: 'b4', name: 'Small banana', cal: '90 cal', pro: null, fib: '3g fiber' },
+        { id: 'b5', name: 'Creatine 5g', cal: null, pro: null, fib: null },
+      ]
+    },
+    {
+      id: 'lunch', emoji: '🥗', label: 'Lunch', note: `${d.lunchPotato.g}g sweet potato`,
+      accent: '#27ae60',
+      items: [
+        { id: 'l1', name: 'Chicken 150g', cal: '165 cal', pro: '31g pro', fib: null },
+        { id: 'l2', name: `Korean sweet potato ${d.lunchPotato.g}g`, cal: `${d.lunchPotato.cal} cal`, pro: null, fib: `${d.lunchPotato.fiber}g fiber` },
+        { id: 'l3', name: 'Hummus 40g', cal: '100 cal', pro: '3g pro', fib: '3g fiber' },
+        { id: 'l4', name: 'Cherry tomatoes 60g', cal: '20 cal', pro: null, fib: '1g fiber' },
+        { id: 'l5', name: 'Cucumbers 60g', cal: '10 cal', pro: null, fib: null },
+        { id: 'l6', name: 'Kimchi 80g', cal: '30 cal', pro: '2g pro', fib: '2g fiber' },
+      ]
+    },
+    {
+      id: 'snack1', emoji: '🫐', label: 'Snack 1', note: 'Every day',
+      accent: '#9b59b6',
+      items: [
+        { id: 's1a', name: 'Fage 0% Greek yogurt 170g', cal: '90 cal', pro: '18g pro', fib: null },
+        { id: 's1b', name: 'Catalina Crunch granola 28g', cal: '120 cal', pro: '6g pro', fib: '2g fiber' },
+        { id: 's1c', name: 'Raspberries or blackberries 80g', cal: '40 cal', pro: null, fib: '4g fiber' },
+      ]
+    },
+    {
+      id: 'snack2', emoji: '🍚', label: 'Snack 2', note: 'Training days',
+      accent: '#e67e22',
+      items: [
+        { id: 's2a', name: 'Rice cakes x2', cal: '70 cal', pro: null, fib: null },
+        { id: 's2b', name: `PB & Co Crunch Time ${d.snack2pb.g}`, cal: `${d.snack2pb.cal} cal`, pro: `${d.snack2pb.protein}g pro`, fib: `${d.snack2pb.fiber}g fiber` },
+      ]
+    },
+    {
+      id: 'dinner', emoji: d.emoji, label: `Dinner — ${d.label}`, note: 'Rotate options',
+      accent: d.color,
+      items: d.dinnerItems.map((item, i) => ({ ...item, id: `din${i}` }))
+    },
+    ...(dinner === 'salmon' ? [{
+      id: 'dressing', emoji: '🥢', label: 'Soy Honey Sesame Dressing', note: 'Salmon days only',
+      accent: '#16a085',
+      items: [
+        { id: 'dr1', name: 'Soy sauce (low sodium) — 1 tbsp', cal: null, pro: null, fib: null },
+        { id: 'dr2', name: 'Rice vinegar — 1 tbsp', cal: null, pro: null, fib: null },
+        { id: 'dr3', name: 'Sesame oil — 1 tsp', cal: null, pro: null, fib: null },
+        { id: 'dr4', name: 'Hot honey — 1 tsp', cal: null, pro: null, fib: null },
+        { id: 'dr5', name: 'Garlic powder — pinch (optional)', cal: null, pro: null, fib: null },
+      ]
+    }] : []),
+  ];
+}
+
+function saveChecks() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(checks));
+  localStorage.setItem(DATE_KEY, new Date().toDateString());
+}
+
+function loadChecks() {
+  const savedDate = localStorage.getItem(DATE_KEY);
+  const today = new Date().toDateString();
+  if (savedDate !== today) {
+    checks = {};
+    saveChecks();
+  } else {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    checks = saved ? JSON.parse(saved) : {};
+  }
+}
+
+function resetAll() {
+  checks = {};
+  saveChecks();
+  renderMeals();
+}
+
+function toggleItem(id) {
+  checks[id] = !checks[id];
+  saveChecks();
+  updateProgress();
+  updateItemUI(id);
+  updateMealUI(getMealIdForItem(id));
+}
+
+function toggleMeal(mealId) {
+  const sections = getMealSections(currentDinner);
+  const meal = sections.find(s => s.id === mealId);
+  if (!meal) return;
+  const allChecked = meal.items.every(item => checks[item.id]);
+  meal.items.forEach(item => { checks[item.id] = !allChecked; });
+  saveChecks();
+  renderMeals();
+}
+
+function getMealIdForItem(itemId) {
+  const sections = getMealSections(currentDinner);
+  for (const s of sections) {
+    if (s.items.find(i => i.id === itemId)) return s.id;
+  }
+  return null;
+}
+
+function updateProgress() {
+  const sections = getMealSections(currentDinner);
+  const allItems = sections.flatMap(s => s.items);
+  const total = allItems.length;
+  const done = allItems.filter(i => checks[i.id]).length;
+  document.getElementById('progress-count').textContent = `${done} / ${total} items`;
+  document.getElementById('progress-fill').style.width = total ? `${(done/total)*100}%` : '0%';
+}
+
+function updateItemUI(id) {
+  const itemEl = document.querySelector(`[data-item-id="${id}"]`);
+  if (!itemEl) return;
+  const checked = checks[id];
+  itemEl.querySelector('.item-check').classList.toggle('checked', checked);
+  itemEl.querySelector('.item-name').classList.toggle('done', checked);
+}
+
+function updateMealUI(mealId) {
+  if (!mealId) return;
+  const sections = getMealSections(currentDinner);
+  const meal = sections.find(s => s.id === mealId);
+  if (!meal) return;
+  const allChecked = meal.items.every(item => checks[item.id]);
+  const card = document.querySelector(`[data-meal-id="${mealId}"]`);
+  if (!card) return;
+  card.classList.toggle('all-done', allChecked);
+  card.querySelector('.meal-check').classList.toggle('checked', allChecked);
+  card.querySelector('.meal-name').classList.toggle('done', allChecked);
+  if (allChecked) card.querySelector('.meal-check').textContent = '✓';
+  else card.querySelector('.meal-check').textContent = '';
+}
+
+function renderMeals() {
+  const sections = getMealSections(currentDinner);
+  const container = document.getElementById('meals-container');
+  container.innerHTML = sections.map(section => {
+    const allChecked = section.items.every(i => checks[i.id]);
+    return `
+      <div class="meal-card ${allChecked ? 'all-done' : ''}" data-meal-id="${section.id}" style="border-left-color:${section.accent}">
+        <div class="meal-header">
+          <div class="meal-check ${allChecked ? 'checked' : ''}" onclick="toggleMeal('${section.id}')">${allChecked ? '✓' : ''}</div>
+          <div class="meal-header-left" onclick="toggleMeal('${section.id}')">
+            <span class="meal-emoji">${section.emoji}</span>
+            <span class="meal-name ${allChecked ? 'done' : ''}">${section.label}</span>
+          </div>
+          <span class="meal-note" style="color:${section.accent}; background:${section.accent}15">${section.note}</span>
+        </div>
+        <div class="meal-items">
+          ${section.items.map(item => `
+            <div class="meal-item" data-item-id="${item.id}" onclick="toggleItem('${item.id}')">
+              <div class="item-check ${checks[item.id] ? 'checked' : ''}">${checks[item.id] ? '✓' : ''}</div>
+              <div class="item-content">
+                <span class="item-name ${checks[item.id] ? 'done' : ''}">${item.name}</span>
+                <div class="item-macros">
+                  ${item.cal ? `<span class="cal">${item.cal}</span>` : ''}
+                  ${item.pro ? `<span class="pro">${item.pro}</span>` : ''}
+                  ${item.fib ? `<span class="fib">${item.fib}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+  updateProgress();
+}
+
+function selectDinner(key) {
+  currentDinner = key;
+  const d = dinners[key];
+
+  Object.keys(dinners).forEach(k => {
+    const btn = document.getElementById('btn-' + k);
+    btn.classList.remove('active');
+    btn.style.background = '#fff';
+    btn.style.color = '#666';
+    btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+    btn.style.transform = 'none';
+  });
+  const activeBtn = document.getElementById('btn-' + key);
+  activeBtn.classList.add('active');
+  activeBtn.style.background = d.color;
+  activeBtn.style.color = '#fff';
+  activeBtn.style.boxShadow = `0 4px 16px ${d.color}40`;
+  activeBtn.style.transform = 'translateY(-2px)';
+
+  const bar = document.getElementById('totals-bar');
+  bar.style.background = d.bg;
+  bar.style.borderColor = d.color + '30';
+  document.getElementById('totals-label').style.color = d.color;
+  document.getElementById('totals-sub').textContent = d.label + ' day';
+  document.getElementById('total-cal').textContent = d.total.cal;
+  document.getElementById('total-pro').textContent = d.total.pro;
+  document.getElementById('total-fib').textContent = d.total.fib;
+
+  renderMeals();
+}
+
+// Auto-reset at midnight
+function scheduleReset() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const msUntilMidnight = midnight - now;
+  setTimeout(() => {
+    checks = {};
+    saveChecks();
+    renderMeals();
+    scheduleReset();
+  }, msUntilMidnight);
+}
+
+// Tracker
+const START_KEY = 'recomp_start_date';
+const TOTAL_WEEKS = 12;
+
+function getStartDate() {
+  const s = localStorage.getItem(START_KEY);
+  return s ? new Date(s) : null;
+}
+
+function setStartDate(dateStr) {
+  const date = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+  localStorage.setItem(START_KEY, date.toISOString());
+  renderTracker();
+}
+
+function resetTracker() {
+  if (confirm('Reset your recomp start date?')) {
+    localStorage.removeItem(START_KEY);
+    renderTracker();
+  }
+}
+
+function renderTracker() {
+  const startDate = getStartDate();
+  const wrap = document.getElementById('tracker-start-wrap');
+  const body = document.getElementById('tracker-body');
+
+  if (!startDate) {
+    const today = new Date().toISOString().split('T')[0];
+    wrap.innerHTML = '';
+    body.innerHTML = `
+      <div style="text-align:center; padding: 8px 0 16px">
+        <p style="font-size:13px; color:#888; margin-bottom:14px">Pick your start date to begin tracking your 8–12 week recomp journey.</p>
+        <div style="display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap">
+          <input type="date" id="start-date-input" value="${today}" max="${today}"
+            style="padding:8px 12px; border-radius:10px; border:1.5px solid #ddd; font-size:13px; font-family:'DM Sans',sans-serif; color:#333; outline:none; background:#fafafa"/>
+          <button class="tracker-start-btn" onclick="setStartDate(document.getElementById('start-date-input').value)">Set Start Date</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const now = new Date();
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const totalDays = Math.floor((now - startDate) / msPerDay);
+  const totalWeeks = Math.floor(totalDays / 7);
+  const daysTo8wk = Math.max(0, 56 - totalDays);
+  const daysTo12wk = Math.max(0, 84 - totalDays);
+  const hit8wk = totalDays >= 56;
+  const hit12wk = totalDays >= 84;
+
+  const startDateStr = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const wk8Date = new Date(startDate.getTime() + 56 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const wk12Date = new Date(startDate.getTime() + 84 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  wrap.innerHTML = `
+    <div style="display:flex; align-items:center; gap:8px">
+      <span style="font-size:11px; color:#888">since ${startDateStr}</span>
+      <button class="tracker-reset-btn" onclick="resetTracker()">Change</button>
+    </div>
+  `;
+
+  // milestone message
+  let msg = '', msgBg = '', msgColor = '';
+  if (totalDays === 0) {
+    msg = '🌱 Day 1 — you started today! Consistency is everything.'; msgBg = '#e8f8f0'; msgColor = '#27ae60';
+  } else if (totalWeeks < 4) {
+    msg = `💪 Week ${totalWeeks + 1} — building the habit. Stay consistent!`; msgBg = '#e8f4fd'; msgColor = '#2980b9';
+  } else if (totalWeeks < 8) {
+    msg = `🔥 Week ${totalWeeks + 1} — you're in the zone. First check-in coming up at week 8!`; msgBg = '#fef5e7'; msgColor = '#e67e22';
+  } else if (totalDays === 56) {
+    msg = `🎉 8 week mark — time to assess! Check how clothes fit and gym strength.`; msgBg = '#e8f8f0'; msgColor = '#27ae60';
+  } else if (totalWeeks < 12) {
+    msg = `⭐ Week ${totalWeeks + 1} — past the 8wk mark. Keep pushing to 12!`; msgBg = '#fdf2f2'; msgColor = '#c0392b';
+  } else if (totalDays === 84) {
+    msg = `🏆 12 week mark — full recomp cycle complete. Time for a full assessment!`; msgBg = '#f5f0ff'; msgColor = '#9b59b6';
+  } else {
+    msg = `🏆 ${totalWeeks} weeks in — well past the 12wk mark. You've built a lifestyle!`; msgBg = '#f5f0ff'; msgColor = '#9b59b6';
+  }
+
+  // week bars
+  const phases = [
+    { label: 'Wk 1–4', total: 28, done: Math.min(totalDays, 28), color: '#2980b9' },
+    { label: 'Wk 5–8', total: 28, done: Math.max(0, Math.min(totalDays - 28, 28)), color: '#e67e22' },
+    { label: 'Wk 9–12', total: 28, done: Math.max(0, Math.min(totalDays - 56, 28)), color: '#c0392b' },
+  ];
+
+  body.innerHTML = `
+    <div class="tracker-stats">
+      <div class="tracker-stat">
+        <div class="t-val">${totalDays}</div>
+        <div class="t-unit">days</div>
+        <div class="t-lbl">on plan</div>
+      </div>
+      <div class="tracker-stat">
+        <div class="t-val">${totalWeeks}</div>
+        <div class="t-unit">weeks</div>
+        <div class="t-lbl">completed</div>
+      </div>
+      <div class="tracker-stat">
+        <div class="t-val" style="color:${hit8wk ? '#27ae60' : '#e67e22'}">${hit8wk ? '✓' : daysTo8wk}</div>
+        <div class="t-unit">days</div>
+        <div class="t-lbl">${hit8wk ? '8wk done!' : 'to 8wk'}</div>
+      </div>
+      <div class="tracker-stat">
+        <div class="t-val" style="color:${hit12wk ? '#27ae60' : '#c0392b'}">${hit12wk ? '✓' : daysTo12wk}</div>
+        <div class="t-unit">days</div>
+        <div class="t-lbl">${hit12wk ? '12wk done!' : 'to 12wk'}</div>
+      </div>
+    </div>
+    <div class="week-track" style="margin-bottom:12px">
+      ${phases.map(p => {
+        const pct = Math.round((p.done / p.total) * 100);
+        const statusText = p.done >= p.total ? '✓' : `${p.done}d`;
+        const statusColor = p.done >= p.total ? '#27ae60' : p.color;
+        return `
+          <div class="week-row">
+            <span class="week-label">${p.label}</span>
+            <div class="week-bar-track">
+              <div class="week-bar-fill" style="width:${pct}%; background:${p.color}"></div>
+            </div>
+            <span class="week-status" style="color:${statusColor}">${statusText}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap">
+      <div style="flex:1; min-width:120px; padding:10px 14px; border-radius:12px; background:${hit8wk ? '#e8f8f0' : '#fef5e7'}; border:1.5px solid ${hit8wk ? '#27ae60' : '#e67e22'}30">
+        <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:${hit8wk ? '#27ae60' : '#e67e22'}; margin-bottom:3px">🎯 8 Week Check-in</div>
+        <div style="font-size:12px; color:#555">${hit8wk ? 'Reached! Assess progress 🎉' : `${wk8Date} · ${daysTo8wk} days away`}</div>
+      </div>
+      <div style="flex:1; min-width:120px; padding:10px 14px; border-radius:12px; background:${hit12wk ? '#e8f8f0' : '#fdf2f2'}; border:1.5px solid ${hit12wk ? '#27ae60' : '#c0392b'}30">
+        <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:${hit12wk ? '#27ae60' : '#c0392b'}; margin-bottom:3px">🏆 12 Week Mark</div>
+        <div style="font-size:12px; color:#555">${hit12wk ? 'Reached! Full cycle done 🏆' : `${wk12Date} · ${daysTo12wk} days away`}</div>
+      </div>
+    </div>
+    <div class="tracker-msg" style="background:${msgBg}; color:${msgColor}">${msg}</div>
+  `;
+}
+
+// Tab switching
+function switchTab(tab) {
+  ['plan','grocery','water','log','recipes','reminders'].forEach(t => {
+    document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'grocery') renderGrocery();
+  if (tab === 'water') renderWater();
+  if (tab === 'log') renderLog();
+}
+
+// Recipe toggles
+function toggleRecipe(id) {
+  const body = document.getElementById('body-' + id);
+  const toggle = document.getElementById('toggle-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+// Grocery
+const GROCERY_KEY = 'mealplan_grocery';
+
+const PLAN_ITEMS = [
+  // Protein
+  { name: 'Transparent Labs protein shake', cat: 'Protein & Supplements' },
+  { name: 'Chicken breast', cat: 'Protein & Supplements' },
+  { name: 'Beef (lean)', cat: 'Protein & Supplements' },
+  { name: 'Salmon fillets', cat: 'Protein & Supplements' },
+  { name: 'Fage 0% Greek yogurt', cat: 'Protein & Supplements' },
+  { name: 'Cottage cheese', cat: 'Protein & Supplements' },
+  { name: 'Creatine', cat: 'Protein & Supplements' },
+  // Produce
+  { name: 'Fuji apples', cat: 'Produce' },
+  { name: 'Bananas', cat: 'Produce' },
+  { name: 'Raspberries or blackberries', cat: 'Produce' },
+  { name: 'Cherry tomatoes', cat: 'Produce' },
+  { name: 'Cucumbers', cat: 'Produce' },
+  { name: 'Avocado', cat: 'Produce' },
+  { name: 'Shredded cabbage', cat: 'Produce' },
+  // Pantry
+  { name: 'Korean sweet potatoes', cat: 'Pantry & Fridge' },
+  { name: 'Kimchi', cat: 'Pantry & Fridge' },
+  { name: 'Hummus', cat: 'Pantry & Fridge' },
+  { name: 'Silk soy milk', cat: 'Pantry & Fridge' },
+  { name: 'Catalina Crunch honey cashew granola', cat: 'Pantry & Fridge' },
+  { name: 'Rice cakes', cat: 'Pantry & Fridge' },
+  { name: 'PB & Co Crunch Time peanut butter', cat: 'Pantry & Fridge' },
+  { name: 'Hot honey', cat: 'Pantry & Fridge' },
+  // Dressing
+  { name: 'Soy sauce (low sodium)', cat: 'Dressing' },
+  { name: 'Rice vinegar', cat: 'Dressing' },
+  { name: 'Sesame oil', cat: 'Dressing' },
+  { name: 'Garlic powder', cat: 'Dressing' },
+  // Spices
+  { name: 'Salt', cat: 'Spices' },
+  { name: 'Black pepper', cat: 'Spices' },
+  { name: 'Garlic powder', cat: 'Spices' },
+  { name: 'Smoked paprika', cat: 'Spices' },
+  { name: 'Everything But the Bagel seasoning', cat: 'Spices' },
+];
+
+const CAT_COLORS = {
+  'Protein & Supplements': { bg: '#e8f4fd', color: '#2980b9' },
+  'Produce': { bg: '#e8f8f0', color: '#27ae60' },
+  'Pantry & Fridge': { bg: '#fef5e7', color: '#e67e22' },
+  'Dressing': { bg: '#f0faf8', color: '#16a085' },
+  'Spices': { bg: '#fdf8f0', color: '#c0392b' },
+  'Custom': { bg: '#f5f0ff', color: '#9b59b6' },
+};
+
+function loadGrocery() {
+  const saved = localStorage.getItem(GROCERY_KEY);
+  if (!saved) return PLAN_ITEMS.map((item, i) => ({ id: `g${i}`, name: item.name, cat: item.cat, bought: false }));
+
+  const items = JSON.parse(saved);
+  const planNames = PLAN_ITEMS.map(i => i.name.toLowerCase());
+
+  // Migration: remove any item that is not in the plan list AND doesn't have userAdded flag
+  // (these are old custom items added before the userAdded flag existed)
+  const migrated = items.filter(item => {
+    const isPlanItem = planNames.includes(item.name.toLowerCase());
+    const isUserAdded = item.userAdded === true;
+    return isPlanItem || isUserAdded;
+  });
+
+  // Save migrated list back if anything changed
+  if (migrated.length !== items.length) {
+    localStorage.setItem(GROCERY_KEY, JSON.stringify(migrated));
+  }
+
+  return migrated;
+}
+
+function saveGrocery(items) {
+  localStorage.setItem(GROCERY_KEY, JSON.stringify(items));
+}
+
+function toggleGroceryItem(id) {
+  const items = loadGrocery();
+  const item = items.find(i => i.id === id);
+  if (item) { item.bought = !item.bought; saveGrocery(items); renderGrocery(); }
+}
+
+function deleteGroceryItem(id) {
+  const items = loadGrocery();
+  const item = items.find(i => i.id === id);
+  if (item && item.userAdded) {
+    saveGrocery(items.filter(i => i.id !== id)); renderGrocery();
+  }
+}
+
+function uncheckAll() {
+  const items = loadGrocery().map(i => ({ ...i, bought: false }));
+  saveGrocery(items); renderGrocery();
+}
+
+async function addCustomItem() {
+  const input = document.getElementById('grocery-input');
+  const addBtn = document.getElementById('grocery-add-btn');
+  const name = input.value.trim();
+  if (!name) return;
+
+  // Show loading state
+  addBtn.textContent = '...';
+  addBtn.disabled = true;
+  input.disabled = true;
+
+  let cat = 'Custom';
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 20,
+        system: `You are a grocery categorizer. Given an ingredient or grocery item, respond with ONLY one of these exact category names and nothing else:
+Protein & Supplements
+Produce
+Pantry & Fridge
+Dressing
+Spices
+Custom
+
+Rules:
+- Meat, fish, dairy, eggs, protein powder, supplements → Protein & Supplements
+- Fresh fruits, vegetables, herbs → Produce
+- Canned goods, grains, sauces, condiments, refrigerated non-dairy → Pantry & Fridge
+- Vinegars, oils, dressings, marinades → Dressing
+- Dried spices, seasonings, salt, pepper → Spices
+- Anything unclear → Custom`,
+        messages: [{ role: 'user', content: name }]
+      })
+    });
+    const data = await response.json();
+    const result = data.content?.[0]?.text?.trim();
+    const validCats = ['Protein & Supplements', 'Produce', 'Pantry & Fridge', 'Dressing', 'Spices', 'Custom'];
+    if (validCats.includes(result)) cat = result;
+  } catch (e) {
+    // Fallback to Custom if API fails
+    cat = 'Custom';
+  }
+
+  const items = loadGrocery();
+  items.push({ id: `gc${Date.now()}`, name, cat, bought: false, userAdded: true });
+  saveGrocery(items);
+  input.value = '';
+  addBtn.textContent = '+ Add';
+  addBtn.disabled = false;
+  input.disabled = false;
+  renderGrocery();
+}
+
+function renderGrocery() {
+  const items = loadGrocery();
+  const total = items.length;
+  const bought = items.filter(i => i.bought).length;
+  const remaining = total - bought;
+
+  // Stats
+  document.getElementById('grocery-stats').innerHTML = `
+    <span class="grocery-stat-pill" style="background:#e8f8f0; color:#27ae60">${remaining} remaining</span>
+    <span class="grocery-stat-pill" style="background:#f0f0f0; color:#888">${bought} bought</span>
+    <span class="grocery-stat-pill" style="background:#f5f5f5; color:#aaa">${total} total</span>
+  `;
+
+  // Group by category
+  const cats = {};
+  items.forEach(item => {
+    if (!cats[item.cat]) cats[item.cat] = [];
+    cats[item.cat].push(item);
+  });
+
+  // Sort: unbought first within each category
+  const catOrder = ['Protein & Supplements', 'Produce', 'Pantry & Fridge', 'Dressing', 'Spices', 'Custom'];
+  let html = '';
+  catOrder.forEach(cat => {
+    if (!cats[cat] || cats[cat].length === 0) return;
+    const c = CAT_COLORS[cat] || { bg: '#f5f5f5', color: '#888' };
+    const sorted = [...cats[cat]].sort((a, b) => a.bought - b.bought);
+    html += `<div class="grocery-section-label">${cat}</div>`;
+    sorted.forEach(item => {
+      const isCustom = item.cat === 'Custom';
+      const canDelete = item.userAdded;
+      html += `
+        <div class="grocery-item ${item.bought ? 'bought' : ''}">
+          <div class="grocery-check ${item.bought ? 'checked' : ''}" onclick="toggleGroceryItem('${item.id}')">${item.bought ? '✓' : ''}</div>
+          <span class="grocery-item-name ${item.bought ? 'done' : ''}" onclick="toggleGroceryItem('${item.id}')">${item.name}</span>
+          <span class="grocery-item-tag" style="background:${c.bg}; color:${c.color}">${isCustom ? '✏️ custom' : cat.split(' ')[0].toLowerCase()}</span>
+          ${canDelete ? `<button class="grocery-delete" onclick="deleteGroceryItem('${item.id}')">×</button>` : ''}
+        </div>
+      `;
+    });
+  });
+
+  document.getElementById('grocery-list').innerHTML = html;
+}
+
+// Water tracker
+const WATER_KEY = 'mealplan_water';
+const WATER_DATE_KEY = 'mealplan_water_date';
+const WATER_GOAL = 4; // bottles
+const BOTTLE_OZ = 24;
+
+function loadWater() {
+  const savedDate = localStorage.getItem(WATER_DATE_KEY);
+  const today = new Date().toDateString();
+  if (savedDate !== today) {
+    localStorage.setItem(WATER_KEY, '0');
+    localStorage.setItem(WATER_DATE_KEY, today);
+    return 0;
+  }
+  return parseInt(localStorage.getItem(WATER_KEY) || '0');
+}
+
+function saveWater(count) {
+  localStorage.setItem(WATER_KEY, String(count));
+  localStorage.setItem(WATER_DATE_KEY, new Date().toDateString());
+}
+
+function addWater() {
+  const current = loadWater();
+  if (current >= WATER_GOAL) return;
+  saveWater(current + 1);
+  renderWater();
+}
+
+function undoWater() {
+  const current = loadWater();
+  if (current <= 0) return;
+  saveWater(current - 1);
+  renderWater();
+}
+
+function renderWater() {
+  const count = loadWater();
+  const oz = count * BOTTLE_OZ;
+  const totalOz = WATER_GOAL * BOTTLE_OZ;
+  const pct = Math.round((count / WATER_GOAL) * 100);
+
+  document.getElementById('water-oz').textContent = `${oz} / ${totalOz} oz`;
+  document.getElementById('water-bar-label').textContent = `${count} of ${WATER_GOAL} bottles`;
+  document.getElementById('water-bar-pct').textContent = `${pct}%`;
+  document.getElementById('water-fill').style.width = `${pct}%`;
+
+  // Bottles
+  let bottlesHTML = '';
+  for (let i = 0; i < WATER_GOAL; i++) {
+    const filled = i < count;
+    bottlesHTML += `
+      <button class="bottle-btn" onclick="addWater()">
+        <span class="bottle-icon ${filled ? 'filled' : ''}">💧</span>
+        <span class="bottle-label ${filled ? 'filled' : ''}">${(i + 1) * BOTTLE_OZ}oz</span>
+      </button>
+    `;
+  }
+  document.getElementById('water-bottles').innerHTML = bottlesHTML;
+
+  // Message
+  const msgEl = document.getElementById('water-msg');
+  let msg = '', bg = '', color = '';
+  if (count === 0) { msg = "Tap a bottle to log it 💧"; bg = '#f0f8ff'; color = '#7fb3d3'; }
+  else if (count === 1) { msg = "Good start! 3 more to go 💪"; bg = '#e8f4fd'; color = '#2980b9'; }
+  else if (count === 2) { msg = "Halfway there! Keep it up 🌊"; bg = '#d6eaf8'; color = '#2471a3'; }
+  else if (count === 3) { msg = "One more bottle and you're done! 🔥"; bg = '#d0f0fd'; color = '#1a6fa3'; }
+  else { msg = "Goal hit! 96oz done 🎉 Your muscles thank you."; bg = '#e8f8f0'; color = '#27ae60'; }
+  msgEl.textContent = msg;
+  msgEl.style.background = bg;
+  msgEl.style.color = color;
+}
+
+// Daily Log
+const LOG_KEY = 'mealplan_log';
+const LOG_FIELDS = [
+  { id: 'energy', label: '⚡ Energy', options: ['😴 Low', '😐 Okay', '😊 Good', '🔥 Great'] },
+  { id: 'gym', label: '💪 Gym', options: ['Skipped', '😐 Meh', '💪 Solid', '🏆 Crushed'] },
+  { id: 'sleep', label: '😴 Sleep', options: ['😫 Bad', '😐 Okay', '😊 Good', '⭐ Great'] },
+  { id: 'hunger', label: '🌀 Hunger', options: ['Starving', 'Hungry', 'Satisfied', 'Full'] },
+];
+
+function loadLogData() {
+  const saved = localStorage.getItem(LOG_KEY);
+  return saved ? JSON.parse(saved) : {};
+}
+
+function saveLog() {
+  const today = new Date().toDateString();
+  const all = loadLogData();
+  const notes = document.getElementById('log-notes').value;
+  const scores = {};
+  LOG_FIELDS.forEach(f => {
+    const selected = document.querySelector(`#log-${f.id} .log-scale-btn.selected`);
+    if (selected) scores[f.id] = selected.textContent;
+  });
+  all[today] = { scores, notes, ts: Date.now() };
+  localStorage.setItem(LOG_KEY, JSON.stringify(all));
+}
+
+function selectScale(fieldId, value, btn) {
+  document.querySelectorAll(`#log-${fieldId} .log-scale-btn`).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  saveLog();
+}
+
+function renderLog() {
+  const today = new Date().toDateString();
+  document.getElementById('log-date').textContent = today;
+
+  const all = loadLogData();
+  const todayData = all[today] || {};
+
+  // Render scales
+  LOG_FIELDS.forEach(f => {
+    const el = document.getElementById(`log-${f.id}`);
+    el.innerHTML = f.options.map(opt => {
+      const isSelected = todayData.scores && todayData.scores[f.id] === opt;
+      return `<button class="log-scale-btn ${isSelected ? 'selected' : ''}" onclick="selectScale('${f.id}', '${opt}', this)">${opt}</button>`;
+    }).join('');
+  });
+
+  // Notes
+  document.getElementById('log-notes').value = todayData.notes || '';
+
+  // History
+  const entries = Object.entries(all)
+    .filter(([date]) => date !== today)
+    .sort((a, b) => b[1].ts - a[1].ts)
+    .slice(0, 10);
+
+  const histEl = document.getElementById('log-history');
+  if (entries.length === 0) {
+    histEl.innerHTML = '<div class="log-empty">No past entries yet — start logging today!</div>';
+    return;
+  }
+  histEl.innerHTML = entries.map(([date, data]) => `
+    <div class="log-entry">
+      <div class="log-entry-date">${date}</div>
+      ${data.scores && Object.keys(data.scores).length > 0 ? `
+        <div class="log-entry-scores">
+          ${Object.entries(data.scores).map(([k, v]) => `<span class="log-entry-score">${v}</span>`).join('')}
+        </div>` : ''}
+      ${data.notes ? `<div class="log-entry-notes">${data.notes}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// Init
+loadChecks();
+selectDinner('beef');
+scheduleReset();
+renderTracker();
+renderGrocery();
+renderWater();
+renderLog();
+</script>
+</body>
+</html>
